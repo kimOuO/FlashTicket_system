@@ -1,0 +1,23 @@
+{
+    "target_url": "https://ticket-training.onrender.com/progress",
+    "api_endpoint": "https://ticket-training.onrender.com/loading",
+    "method": "GET",
+    "target_time_iso": "2026-02-28T13:34:00.000000",
+    "lead_time_seconds": 0.05,
+    "accounts": [
+        {"username": "demo_user", "password": "demo_password"}
+    ],
+    "selectors": {
+        "area_item": ".seat-item",
+        "quantity_select": "select[name='quantity']",
+        "terms_checkbox": "#terms-checkbox",
+        "captcha_input": "#captcha-input",
+        "captcha_img": "#captcha-image",
+        "submit_btn": "button.confirm-btn"
+    },
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    },
+    "proxy_pool": [],
+    "max_retries": 3
+}
