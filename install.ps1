@@ -5,7 +5,7 @@ Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host "    FlashTicket Secure Setup Script (VENV)" -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
-# 1. «Ø¥ß¨Ã±Ò°ÊµêÀÀÀô¹Ò
+# 1. ï¿½Ø¥ß¨Ã±Ò°Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 Write-Host "1. Creating Python Virtual Environment (venv)..." -ForegroundColor Yellow
 if (-not (Test-Path ".\venv")) {
     python -m venv venv
@@ -14,16 +14,16 @@ if (-not (Test-Path ".\venv")) {
     Write-Host "-> Virtual environment already exists." -ForegroundColor Green
 }
 
-# Àò¨úµêÀÀÀô¹Ò¤¤ªº Python ©M Pip ¸ô®|
+# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¤ï¿½ï¿½ï¿½ Python ï¿½M Pip ï¿½ï¿½ï¿½|
 $venvPython = ".\venv\Scripts\python.exe"
 $venvPip = ".\venv\Scripts\pip.exe"
 $venvPlaywright = ".\venv\Scripts\playwright.exe"
 
-# 2. ¦bµêÀÀÀô¹Ò¤¤¦w¸Ë®M¥ó
+# 2. ï¿½bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¤ï¿½ï¿½wï¿½Ë®Mï¿½ï¿½
 Write-Host "`n2. Installing Python Requirements in venv..." -ForegroundColor Yellow
 & $venvPip install -r requirements.txt
 
-# 3. ¦bµêÀÀÀô¹Ò¤¤¦w¸Ë Playwright ÂsÄý¾¹
+# 3. ï¿½bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¤ï¿½ï¿½wï¿½ï¿½ Playwright ï¿½sï¿½ï¿½ï¿½ï¿½
 Write-Host "`n3. Installing Playwright Browsers in venv..." -ForegroundColor Yellow
 & $venvPlaywright install chromium
 
