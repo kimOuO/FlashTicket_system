@@ -108,18 +108,47 @@ async def visual_attack(context, account):
         # 2. 勾選條款
         await page.check(CONFIG['selectors']['terms_checkbox'])
         
-        # 3. 處理驗證碼 (讀取 data-answer)
-        captcha_elem = await page.wait_for_selector(CONFIG['selectors']['captcha_img'])
-        if captcha_elem:
-            answer = await captcha_elem.get_attribute("data-answer")
-            if answer:
-                logger.info(f"填入驗證碼: {answer}")
-                await page.fill(CONFIG['selectors']['captcha_input'], answer)
-        
-        # 4. 點擊提交按鈕
-        submit_btn = page.locator(CONFIG['selectors']['submit_btn'])
-        await submit_btn.click()
-        logger.info(f"[{account['username']}] 4. 提交按鈕已點擊！")
+        # 3. 處理驗證碼 (改為手動輸入或簡單提示)
+        try:
+            # 嘗試等待驗證碼圖片出現
+            captcha_elem = await page.wait_for_selector(CONFIG['selectors']['captcha_img'], timeout=2000)
+            if captcha_elem:
+                # 聚焦到驗證碼輸入框，方便使用者直接輸入
+                await page.focus(CONFIG['selectors']['captcha_input'])
+                
+                # 播放提示音 (Windows) 或打印巨大的提示
+                logger.warning("!!! 請輸入驗證碼 !!!")
+                logger.warning("!!! 請輸入驗證碼 !!!")
+                logger.warning("!!! 請輸入驗證碼 !!!")
+                import winsound
+                winsound.Beep(1000, 500) # 頻率 1000Hz，持續 0.5 秒
+
+                # 在這裡我們可以選擇等待使用者輸入，或者用一個無限迴圈檢查輸入框是否有值
+                # 為了搶票速度，這裡建議由使用者手動輸入後，手動按 Enter (或者我們偵測輸入長度)
+                
+                # 方案 A: 等待使用者在 input 框輸入至少 4 碼 (假設驗證碼長度)
+                # await page.wait_for_function(f"document.querySelector('{CONFIG['selectors']['captcha_input']}').value.length >= 4")
+                
+                # 方案 B: 使用者自行輸入並按下提交，程式不干涉驗證碼部分，只負責前面的勾選
+                logger.info("已聚焦輸入框，請手動輸入驗證碼並提交 (程式會繼續監視結果)...")
+                
+                # 修改邏輯：等待使用者輸入滿 4 碼 (假設驗證碼長度) 後自動提交，或者讓使用者自己按 Enter
+                # 這裡改成：偵測到使用者按下 Enter 鍵，或點擊了提交按鈕後，程式才繼續後續的截圖/紀錄
+                
+                # 等待導航發生 (代表使用者送出了表單)
+                await page.wait_for_url("**/loading*", timeout=60000) # 給使用者 60 秒輸入
+                logger.info("檢測到頁面跳轉，使用者已提交驗證碼！")
+                
+                # 跳過原本的自動點擊，直接進入結果判斷
+                # (因為使用者手動提交了)
+                pass 
+
+        except Exception as e:
+             logger.info(f"驗證碼處理或等待提交時發生狀況 (或無驗證碼): {e}")
+             # 如果沒有驗證碼，或者等待超時，嘗試自動點擊提交
+             submit_btn = page.locator(CONFIG['selectors']['submit_btn'])
+             await submit_btn.click()
+             logger.info(f"[{account['username']}] 4. 嘗試自動點擊提交按鈕！")
 
         # 等待結果頁面 (觀察用)
         try:
@@ -132,24 +161,22 @@ async def visual_attack(context, account):
             logger.info(f"已保存成功截圖：{filename}")
 
             # 保持瀏覽器開啟一段時間以供觀察
-            await asyncio.sleep(10) 
+            # await asyncio.sleep(10)  # 因為外層有等待，這裡可以不用暫停太久
         except:
-            logger.warning("未檢測到跳轉，可能失敗或網路延遲。")
+            logger.warning("未檢測到跳轉，可能失敗或網路延遲。請手動檢查頁面。")
             await page.screenshot(path="failed_evidence.png")
-            await asyncio.sleep(2)
+            # await asyncio.sleep(2)
 
     except Exception as e:
         logger.error(f"流程異常: {e}")
-    finally:
-        await page.close()
+    # finally:
+        # await page.close()  # 不自動關閉頁面，讓使用者可以繼續操作
 
 async def main():
     async with async_playwright() as p:
-        # headless=False 讓瀏覽器視窗跳出來
-        # 修正：在無介面環境下 (如 VS Code Terminal)，必須使用 headless=True
-        # 或安裝 Xvfb，但最穩的方法是換回 headless=True
+        # headless=False 讓瀏覽器視窗跳出來，方便手動輸入付款資訊
         browser = await p.chromium.launch(
-            headless=True, 
+            headless=False, 
             args=["--start-maximized"] # 最大化視窗
         )
         
@@ -161,6 +188,14 @@ async def main():
         # 這裡帳號結構不同，需要提取第一個帳號物件
         task = visual_attack(context, CONFIG['accounts'][0])
         await task
+
+        logger.info("自動化流程結束，保留視窗以供操作...")
+        try:
+            # 等待使用者按 Enter 結束
+            # 使用 run_in_executor 避免阻塞事件迴圈
+            await asyncio.get_event_loop().run_in_executor(None, input, "請在完成付款後，按 Enter 鍵關閉瀏覽器...")
+        except:
+            pass
         
         await browser.close()
 

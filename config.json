@@ -2,7 +2,7 @@
     "target_url": "https://ticket-training.onrender.com/progress",
     "api_endpoint": "https://ticket-training.onrender.com/loading",
     "method": "GET",
-    "target_time_iso": "2026-02-28T13:34:00.000000",
+    "target_time_iso": "2026-02-28T21:24:00.000000",
     "lead_time_seconds": 0.05,
     "accounts": [
         {"username": "demo_user", "password": "demo_password"}
