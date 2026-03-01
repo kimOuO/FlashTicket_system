@@ -115,12 +115,16 @@ async def automatic_attack(context, account):
 
         logger.info(f"[{account['username']}] 3. 開始填寫與提交！")
         
-        # 填寫
-        await page.select_option(CONFIG['selectors']['quantity_select'], "1")
-        await page.check(CONFIG['selectors']['terms_checkbox'])
-        
         # 驗證碼辨識與提交迴圈 (直到成功為止)
         while True:
+            try:
+                # 把「填寫」放進迴圈，防止驗證碼錯誤導致網頁重整後，選項被清空
+                await page.wait_for_selector(CONFIG['selectors']['quantity_select'], timeout=5000)
+                await page.select_option(CONFIG['selectors']['quantity_select'], "1")
+                await page.check(CONFIG['selectors']['terms_checkbox'])
+            except Exception as e:
+                logger.warning("尋找下拉選單或勾選框失敗，可能網頁未備妥，繼續重試...")
+
             # 自動辨識驗證碼 (如果有)
             captcha_selector = CONFIG['selectors'].get('captcha_img')
             if captcha_selector:
@@ -132,14 +136,21 @@ async def automatic_attack(context, account):
                 
                 answer = await solve_captcha_with_ocr(page, captcha_selector)
                 if answer:
-                    await page.fill(CONFIG['selectors']['captcha_input'], answer)
+                    try:
+                        await page.fill(CONFIG['selectors']['captcha_input'], "")
+                        await page.fill(CONFIG['selectors']['captcha_input'], answer)
+                    except:
+                        pass
                 else:
                     logger.warning("OCR 無法辨識，或無驗證碼。")
             
             # 提交
-            submit_btn = page.locator(CONFIG['selectors']['submit_btn'])
-            await submit_btn.click()
-            logger.info("提交按鈕已點擊！等待結果...")
+            try:
+                submit_btn = page.locator(CONFIG['selectors']['submit_btn'])
+                await submit_btn.click()
+                logger.info("提交按鈕已點擊！等待結果...")
+            except:
+                pass
 
             # 觀察結果
             try:
@@ -148,12 +159,15 @@ async def automatic_attack(context, account):
                 logger.info(f"[{account['username']}] 成功跳轉，可能搶票成功！")
                 break # 成功！跳出無窮迴圈
             except:
-                logger.warning("未檢測到跳轉，可能是驗證碼錯誤。重新填寫...")
+                logger.warning("未檢測到跳轉，可能是驗證碼錯誤。準備下一輪重新填寫...")
                 # 清空驗證碼輸入框，準備下一輪辨識
                 if captcha_selector:
-                    await page.fill(CONFIG['selectors']['captcha_input'], "")
+                    try:
+                        await page.fill(CONFIG['selectors']['captcha_input'], "")
+                    except:
+                        pass
                 
-                # 短暫等待，避免網頁還沒反應過來
+                # 短暫等待，避免網頁還沒反應過來 (給予重整緩衝)
                 await asyncio.sleep(0.5)
 
     except Exception as e:
